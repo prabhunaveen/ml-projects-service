@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+     rollingUpdate:
+        maxSurge: {{ .Values.strategy.maxsurge }}
+        maxUnavailable: {{ .Values.strategy.maxunavailable }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+{{- if .Values.imagepullsecrets }}
+      imagePullSecrets:
+      - name: {{ .Values.imagepullsecrets }}
+{{- end }}
+      volumes:
+        - name: access-keys
+          secret:
+            secretName: ml-projects-access-keys
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.dockerhub }}/{{ .Values.repository }}:{{ .Values.image_tag }}"
+        imagePullPolicy: Always          
+        envFrom:
+        - configMapRef:
+            name: {{ .Chart.Name }}-config
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        ports:
+        - containerPort: {{ .Values.port }}
+        {{- if .Values.healthcheck }}
+        livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 10 }}
+        readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 10 }}
+        {{- end }}
+
+{{- $keys := .Files.Glob "keys/*" }}
+{{- if $keys }}
+        volumeMounts:
+        - mountPath: {{ .Values.ml_projects_access_basepath }}
+          name: access-keys
+      volumes:
+      - name: access-keys
+        secret:
+          secretName: ml-projects-access-keys
+{{ end }}
+

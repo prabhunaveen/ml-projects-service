@@ -1,0 +1,65 @@
+# Default values for ml-project-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+APPLICATION_ENV: "staging"
+APPLICATION_PORT: "3000"
+CERTIFICATE_ISSUER_KID: "d50937e1-9359-4451-a66a-ebee45d1d605"
+INTERNAL_ACCESS_TOKEN: "e7220b7539363210ed15"
+KAFKA_COMMUNICATIONS_ON_OFF: "ON"
+KAFKA_GROUP_ID: "ml-project-service"
+KAFKA_URL: "11.3.2.16:9092"
+ML_CORE_SERVICE_URL: "http://ml-core-service:3000"
+ML_REPORTS_SERVICE_URL: "http://ml-reports-service:3000"
+ML_SURVEY_SERVICE_URL: "http://ml-survey-service:3000"
+MONGODB_URL: "mongodb://11.3.2.26:27017/ml-survey"
+PROJECT_SUBMISSION_TOPIC: "sunbirdstaging.ml.projects.submissions"
+SUBMISSION_TOPIC: "sunbirdstaging.ml.improvement.project.submission"
+USER_SERVICE_URL: "http://learner-service:9000"
+
+image:
+  registry: "docker.io"
+  repository: "ssksanthosh/ml_project_service"
+
+replicaCount: "1"
+
+port: "80"
+targetPort: "3000"
+
+strategy:
+  maxSurge: "25%"
+  maxUnavailable: "25%"
+
+imagePullSecrets: ""
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "100M"
+  limits:
+    cpu: "1"
+    memory: "1G"
+
+livenessProbe:
+  failureThreshold: "2"
+  httpGet:
+    path: "/service/health"
+    port: "3000"
+    initialDelaySeconds: "15"
+    periodSeconds: "15"
+    timeoutSeconds: "5"
+
+readinessProbe:
+  failureThreshold: "2"
+  httpGet:
+    path: "/service/health"
+    port: "3000"
+  initialDelaySeconds: "15"
+  periodSeconds: "15"
+  timeoutSeconds: "5"
+
+autoscaling:
+  enabled: "false"
+  minReplicas: "1"
+  maxReplicas: "100"
+  targetCPUUtilizationPercentage: "80"
